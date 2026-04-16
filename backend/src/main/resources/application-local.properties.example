@@ -1,0 +1,6 @@
+# Copy this file to application-local.properties and fill in your local values.
+# This file is ignored by git — never commit real credentials.
+
+DB_URL=jdbc:mysql://localhost:3306/vagas?useSSL=false&serverTimezone=America/Sao_Paulo&allowPublicKeyRetrieval=true
+DB_USERNAME=root
+DB_PASSWORD=your_password_here
