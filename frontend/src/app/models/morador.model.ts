@@ -5,4 +5,6 @@ export interface Morador {
   bloco: string;
   email: string;
   telefone?: string;
+  googleId?: string;
+  fotoPerfil?: string;
 }
