@@ -5,14 +5,32 @@
 -- =============================================================
 
 -- ---------------------------------------------------------------
+-- Condomínios
+-- ---------------------------------------------------------------
+INSERT INTO condominios (nome, cnpj, endereco, telefone, email) VALUES
+('Residencial das Flores',  '12.345.678/0001-99', 'Rua das Acácias, 100 - Jardim Primavera', '(11) 3333-1111', 'contato@flores.com.br'),
+('Edifício Solar Blumenau', '98.765.432/0001-11', 'Av. Brasil, 500 - Centro',                '(47) 3333-2222', 'solar@blumenau.com.br');
+
+-- ---------------------------------------------------------------
+-- Cargos
+-- ---------------------------------------------------------------
+INSERT INTO cargos (nome, condominio_id) VALUES
+('Síndico',              1),
+('Sub-Síndico Bloco A',  1),
+('Sub-Síndico Bloco B',  1),
+('Conselheiro',          1),
+('Síndico',              2),
+('Sub-Síndico',          2);
+
+-- ---------------------------------------------------------------
 -- Moradores
 -- ---------------------------------------------------------------
-INSERT INTO moradores (nome, apartamento, bloco, email, telefone, google_id, foto_perfil) VALUES
-('Ana Lima',        '101', 'A', 'ana.lima@email.com',        '(11) 91111-1111', NULL, NULL),
-('Bruno Souza',     '202', 'A', 'bruno.souza@email.com',     '(11) 92222-2222', NULL, NULL),
-('Carla Mendes',    '303', 'B', 'carla.mendes@email.com',    '(11) 93333-3333', NULL, NULL),
-('Diego Ferreira',  '404', 'B', 'diego.ferreira@email.com',  '(11) 94444-4444', NULL, NULL),
-('Eva Castro',      '105', 'C', 'eva.castro@email.com',      '(11) 95555-5555', NULL, NULL);
+INSERT INTO moradores (nome, apartamento, bloco, email, telefone, google_id, foto_perfil, condominio_id, cargo_id) VALUES
+('Ana Lima',        '101', 'A', 'ana.lima@email.com',        '(11) 91111-1111', NULL, NULL, 1, 1),
+('Bruno Souza',     '202', 'A', 'bruno.souza@email.com',     '(11) 92222-2222', NULL, NULL, 1, 2),
+('Carla Mendes',    '303', 'B', 'carla.mendes@email.com',    '(11) 93333-3333', NULL, NULL, 1, 3),
+('Diego Ferreira',  '404', 'B', 'diego.ferreira@email.com',  '(11) 94444-4444', NULL, NULL, 2, 5),
+('Eva Castro',      '105', 'C', 'eva.castro@email.com',      '(11) 95555-5555', NULL, NULL, 2, NULL);
 
 -- ---------------------------------------------------------------
 -- Vagas

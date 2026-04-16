@@ -9,5 +9,6 @@ export const routes: Routes = [
   { path: 'ofertas', loadComponent: () => import('./pages/ofertas/ofertas').then(m => m.Ofertas), canActivate: [authGuard] },
   { path: 'solicitacoes', loadComponent: () => import('./pages/solicitacoes/solicitacoes').then(m => m.Solicitacoes), canActivate: [authGuard] },
   { path: 'moradores', loadComponent: () => import('./pages/moradores/moradores').then(m => m.Moradores), canActivate: [authGuard] },
+  { path: 'condominios', loadComponent: () => import('./pages/condominios/condominios').then(m => m.Condominios), canActivate: [authGuard] },
   { path: 'perfil', loadComponent: () => import('./pages/perfil/perfil').then(m => m.Perfil), canActivate: [authGuard] },
 ];

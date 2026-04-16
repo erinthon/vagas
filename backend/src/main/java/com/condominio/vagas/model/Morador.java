@@ -34,4 +34,12 @@ public class Morador {
     private String googleId;
 
     private String fotoPerfil;
+
+    @ManyToOne
+    @JoinColumn(name = "condominio_id")
+    private Condominio condominio;
+
+    @ManyToOne
+    @JoinColumn(name = "cargo_id")
+    private Cargo cargo;
 }
