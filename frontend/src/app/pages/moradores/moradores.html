@@ -1,1 +1,153 @@
-<p>moradores works!</p>
+<div class="page">
+
+  @if (erro) { <div class="alert-error">{{ erro }}</div> }
+
+  <!-- MORADORES -->
+  <div class="section card">
+    <div class="toolbar">
+      <h2>Moradores</h2>
+      @if (!showFormMorador) {
+        <button class="btn btn-primary" (click)="showFormMorador = true">+ Novo morador</button>
+      }
+    </div>
+
+    @if (showFormMorador) {
+      <form class="form-panel" (ngSubmit)="salvarMorador()" #fMorador="ngForm">
+        <h3>{{ editandoMoradorId ? 'Editar morador' : 'Novo morador' }}</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome *</label>
+            <input name="nome" [(ngModel)]="formMorador.nome" required placeholder="Ex: João Silva" />
+          </div>
+          <div class="form-group">
+            <label>E-mail *</label>
+            <input name="email" type="email" [(ngModel)]="formMorador.email" required placeholder="joao@email.com" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Bloco *</label>
+            <input name="bloco" [(ngModel)]="formMorador.bloco" required placeholder="Ex: A" />
+          </div>
+          <div class="form-group">
+            <label>Apartamento *</label>
+            <input name="apartamento" [(ngModel)]="formMorador.apartamento" required placeholder="Ex: 101" />
+          </div>
+          <div class="form-group">
+            <label>Telefone</label>
+            <input name="telefone" [(ngModel)]="formMorador.telefone" placeholder="(11) 99999-9999" />
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary" [disabled]="fMorador.invalid">Salvar</button>
+          <button type="button" class="btn btn-secondary" (click)="cancelarFormMorador()">Cancelar</button>
+        </div>
+      </form>
+    }
+
+    @if (moradores.length === 0) {
+      <p class="empty">Nenhum morador cadastrado.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Bloco / Apto</th>
+            <th>E-mail</th>
+            <th>Telefone</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of moradores; track m.id) {
+            <tr>
+              <td>{{ m.nome }}</td>
+              <td>{{ m.bloco }} / {{ m.apartamento }}</td>
+              <td>{{ m.email }}</td>
+              <td>{{ m.telefone || '—' }}</td>
+              <td>
+                <div class="actions">
+                  <button class="btn btn-secondary btn-sm" (click)="editarMorador(m)">Editar</button>
+                  <button class="btn btn-danger btn-sm" (click)="excluirMorador(m.id!)">Excluir</button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  <!-- VAGAS -->
+  <div class="section card">
+    <div class="toolbar">
+      <h2>Vagas de Estacionamento</h2>
+      @if (!showFormVaga) {
+        <button class="btn btn-primary" (click)="showFormVaga = true">+ Nova vaga</button>
+      }
+    </div>
+
+    @if (showFormVaga) {
+      <form class="form-panel" (ngSubmit)="salvarVaga()" #fVaga="ngForm">
+        <h3>{{ editandoVagaId ? 'Editar vaga' : 'Nova vaga' }}</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Número *</label>
+            <input name="numero" type="number" [(ngModel)]="formVaga.numero" required min="1" />
+          </div>
+          <div class="form-group">
+            <label>Tipo *</label>
+            <select name="tipo" [(ngModel)]="formVaga.tipo" required>
+              <option value="DESCOBERTA">Descoberta</option>
+              <option value="COBERTA">Coberta</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Proprietário</label>
+            <select name="proprietarioId" [(ngModel)]="formVaga.proprietario!.id">
+              <option [ngValue]="undefined">— Sem proprietário —</option>
+              @for (m of moradores; track m.id) {
+                <option [value]="m.id">{{ m.nome }} ({{ m.bloco }}/{{ m.apartamento }})</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary" [disabled]="fVaga.invalid">Salvar</button>
+          <button type="button" class="btn btn-secondary" (click)="cancelarFormVaga()">Cancelar</button>
+        </div>
+      </form>
+    }
+
+    @if (vagas.length === 0) {
+      <p class="empty">Nenhuma vaga cadastrada.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Tipo</th>
+            <th>Proprietário</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (v of vagas; track v.id) {
+            <tr>
+              <td>{{ v.numero }}</td>
+              <td><span class="badge" [class]="'badge-' + v.tipo.toLowerCase()">{{ v.tipo }}</span></td>
+              <td>{{ v.proprietario ? v.proprietario.nome + ' (' + v.proprietario.bloco + '/' + v.proprietario.apartamento + ')' : '—' }}</td>
+              <td>
+                <div class="actions">
+                  <button class="btn btn-secondary btn-sm" (click)="editarVaga(v)">Editar</button>
+                  <button class="btn btn-danger btn-sm" (click)="excluirVaga(v.id!)">Excluir</button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+</div>

@@ -1,0 +1,17 @@
+.form-panel {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.select-oferta {
+  padding: .3rem .5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: .8rem;
+  min-width: 200px;
+}
+
+textarea { resize: vertical; }

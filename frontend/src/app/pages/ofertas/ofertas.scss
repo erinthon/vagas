@@ -1,0 +1,15 @@
+.form-panel {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.hint {
+  font-size: .75rem;
+  color: var(--warning);
+  margin-top: .2rem;
+}
+
+textarea { resize: vertical; }

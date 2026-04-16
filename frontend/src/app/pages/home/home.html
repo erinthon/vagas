@@ -1,1 +1,39 @@
-<p>home works!</p>
+<div class="page">
+  <h2>Painel do Condomínio</h2>
+
+  @if (carregando) {
+    <p class="empty">Carregando...</p>
+  } @else {
+    <div class="stats-grid">
+      <a routerLink="/moradores" class="stat-card">
+        <span class="stat-icon">👤</span>
+        <span class="stat-value">{{ stats.moradores }}</span>
+        <span class="stat-label">Moradores</span>
+      </a>
+      <a routerLink="/moradores" class="stat-card">
+        <span class="stat-icon">🅿</span>
+        <span class="stat-value">{{ stats.vagas }}</span>
+        <span class="stat-label">Vagas cadastradas</span>
+      </a>
+      <a routerLink="/ofertas" class="stat-card highlight">
+        <span class="stat-icon">✅</span>
+        <span class="stat-value">{{ stats.ofertasAtivas }}</span>
+        <span class="stat-label">Ofertas ativas</span>
+      </a>
+      <a routerLink="/solicitacoes" class="stat-card highlight-warning">
+        <span class="stat-icon">⏳</span>
+        <span class="stat-value">{{ stats.solicitacoesPendentes }}</span>
+        <span class="stat-label">Solicitações pendentes</span>
+      </a>
+    </div>
+
+    <div class="quick-actions card">
+      <h3>Ações rápidas</h3>
+      <div class="actions-row">
+        <a routerLink="/ofertas" class="btn btn-primary">+ Nova oferta de vaga</a>
+        <a routerLink="/solicitacoes" class="btn btn-secondary">+ Nova solicitação</a>
+        <a routerLink="/moradores" class="btn btn-secondary">Gerenciar moradores</a>
+      </div>
+    </div>
+  }
+</div>

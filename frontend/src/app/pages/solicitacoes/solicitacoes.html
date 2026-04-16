@@ -1,1 +1,97 @@
-<p>solicitacoes works!</p>
+<div class="page">
+
+  @if (erro) { <div class="alert-error">{{ erro }}</div> }
+
+  <div class="card">
+    <div class="toolbar">
+      <h2>Solicitações de Vaga</h2>
+      @if (!showForm) {
+        <button class="btn btn-primary" (click)="showForm = true">+ Nova solicitação</button>
+      }
+    </div>
+
+    @if (showForm) {
+      <form class="form-panel" (ngSubmit)="salvarSolicitacao()" #fSol="ngForm">
+        <h3>Nova solicitação</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Morador solicitante *</label>
+            <select name="moradorId" [(ngModel)]="moradorSelecionadoId" (ngModelChange)="onMoradorChange()" required>
+              <option [ngValue]="null">— Selecione —</option>
+              @for (m of moradores; track m.id) {
+                <option [value]="m.id">{{ m.nome }} ({{ m.bloco }}/{{ m.apartamento }})</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Preciso da vaga de *</label>
+            <input name="dataInicio" type="date" [(ngModel)]="formSolicitacao.dataInicio" required />
+          </div>
+          <div class="form-group">
+            <label>até *</label>
+            <input name="dataFim" type="date" [(ngModel)]="formSolicitacao.dataFim" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observação</label>
+          <textarea name="observacao" [(ngModel)]="formSolicitacao.observacao" rows="2" placeholder="Motivo ou observação adicional..."></textarea>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary" [disabled]="fSol.invalid">Enviar solicitação</button>
+          <button type="button" class="btn btn-secondary" (click)="cancelarForm()">Cancelar</button>
+        </div>
+      </form>
+    }
+
+    @if (solicitacoes.length === 0) {
+      <p class="empty">Nenhuma solicitação pendente.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Morador</th>
+            <th>Bloco/Apto</th>
+            <th>Período solicitado</th>
+            <th>Observação</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of solicitacoes; track s.id) {
+            <tr>
+              <td>{{ s.morador.nome }}</td>
+              <td>{{ s.morador.bloco }}/{{ s.morador.apartamento }}</td>
+              <td>{{ s.dataInicio | date:'dd/MM/yy' }} → {{ s.dataFim | date:'dd/MM/yy' }}</td>
+              <td>{{ s.observacao || '—' }}</td>
+              <td><span class="badge" [class]="'badge-' + s.status!.toLowerCase()">{{ s.status }}</span></td>
+              <td>
+                @if (s.status === 'PENDENTE') {
+                  <div class="actions">
+                    @if (atendendoId === s.id) {
+                      <select [(ngModel)]="ofertaSelecionadaId" class="select-oferta">
+                        <option [ngValue]="null">— Selecione oferta —</option>
+                        @for (o of ofertasAtivas; track o.id) {
+                          <option [value]="o.id">
+                            Vaga {{ o.vaga.numero }} · {{ o.dataInicio | date:'dd/MM' }}–{{ o.dataFim | date:'dd/MM' }}
+                          </option>
+                        }
+                      </select>
+                      <button class="btn btn-success btn-sm" (click)="confirmarAtendimento()" [disabled]="!ofertaSelecionadaId">Confirmar</button>
+                      <button class="btn btn-secondary btn-sm" (click)="cancelarAtendimento()">Cancelar</button>
+                    } @else {
+                      <button class="btn btn-success btn-sm" (click)="iniciarAtendimento(s.id!)">Atender</button>
+                      <button class="btn btn-danger btn-sm" (click)="cancelarSolicitacao(s.id!)">Cancelar</button>
+                    }
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

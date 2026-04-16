@@ -1,1 +1,109 @@
-<p>ofertas works!</p>
+<div class="page">
+
+  @if (erro) { <div class="alert-error">{{ erro }}</div> }
+
+  <div class="card">
+    <div class="toolbar">
+      <h2>Ofertas de Vagas</h2>
+      @if (!showForm) {
+        <button class="btn btn-primary" (click)="showForm = true">+ Nova oferta</button>
+      }
+    </div>
+
+    @if (showForm) {
+      <form class="form-panel" (ngSubmit)="salvarOferta()" #fOferta="ngForm">
+        <h3>Nova oferta</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Morador que oferta *</label>
+            <select name="moradorId" [(ngModel)]="moradorSelecionadoId" (ngModelChange)="onMoradorChange()" required>
+              <option [ngValue]="null">— Selecione —</option>
+              @for (m of moradores; track m.id) {
+                <option [value]="m.id">{{ m.nome }} ({{ m.bloco }}/{{ m.apartamento }})</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Vaga *</label>
+            <select name="vagaId" [(ngModel)]="formOferta.vaga.id" required [disabled]="!moradorSelecionadoId">
+              <option [ngValue]="undefined">— Selecione o morador primeiro —</option>
+              @for (v of vagasDoMorador(); track v.id) {
+                <option [value]="v.id">Vaga {{ v.numero }} ({{ v.tipo }})</option>
+              }
+            </select>
+            @if (moradorSelecionadoId && vagasDoMorador().length === 0) {
+              <small class="hint">Morador não possui vagas cadastradas.</small>
+            }
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data início *</label>
+            <input name="dataInicio" type="date" [(ngModel)]="formOferta.dataInicio" required />
+          </div>
+          <div class="form-group">
+            <label>Data fim *</label>
+            <input name="dataFim" type="date" [(ngModel)]="formOferta.dataFim" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observação</label>
+          <textarea name="observacao" [(ngModel)]="formOferta.observacao" rows="2" placeholder="Informações adicionais..."></textarea>
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary" [disabled]="fOferta.invalid">Publicar oferta</button>
+          <button type="button" class="btn btn-secondary" (click)="cancelarForm()">Cancelar</button>
+        </div>
+      </form>
+    }
+
+    <!-- Filtro por período -->
+    <div class="filter-row">
+      <div class="form-group">
+        <label>Período — de</label>
+        <input type="date" [(ngModel)]="filtroInicio" />
+      </div>
+      <div class="form-group">
+        <label>até</label>
+        <input type="date" [(ngModel)]="filtroFim" />
+      </div>
+      <button class="btn btn-secondary" (click)="filtrar()">Filtrar</button>
+      <button class="btn btn-secondary" (click)="limparFiltro()">Limpar</button>
+    </div>
+
+    @if (ofertas.length === 0) {
+      <p class="empty">Nenhuma oferta ativa encontrada.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Morador</th>
+            <th>Bloco/Apto</th>
+            <th>Vaga</th>
+            <th>Período</th>
+            <th>Observação</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (o of ofertas; track o.id) {
+            <tr>
+              <td>{{ o.morador.nome }}</td>
+              <td>{{ o.morador.bloco }}/{{ o.morador.apartamento }}</td>
+              <td>{{ o.vaga.numero }} <span class="badge" [class]="'badge-' + o.vaga.tipo.toLowerCase()">{{ o.vaga.tipo }}</span></td>
+              <td>{{ o.dataInicio | date:'dd/MM/yy' }} → {{ o.dataFim | date:'dd/MM/yy' }}</td>
+              <td>{{ o.observacao || '—' }}</td>
+              <td><span class="badge" [class]="'badge-' + o.status!.toLowerCase()">{{ o.status }}</span></td>
+              <td>
+                @if (o.status === 'ATIVA') {
+                  <button class="btn btn-danger btn-sm" (click)="encerrar(o.id!)">Encerrar</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
