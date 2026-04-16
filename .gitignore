@@ -8,3 +8,12 @@ target/
 *.iws
 *.ipr
 out/
+
+# Sensitive local config — never commit these
+.env
+*.env.local
+backend/src/main/resources/application-local.properties
+
+# Node / Angular
+frontend/node_modules/
+frontend/dist/
