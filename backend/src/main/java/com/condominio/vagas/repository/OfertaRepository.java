@@ -12,4 +12,11 @@ public interface OfertaRepository extends JpaRepository<Oferta, Long> {
     List<Oferta> findByMoradorId(Long moradorId);
     List<Oferta> findByStatusAndDataInicioLessThanEqualAndDataFimGreaterThanEqual(
             StatusOferta status, LocalDate dataFim, LocalDate dataInicio);
+
+    boolean existsByVagaIdAndStatusAndDataInicioLessThanEqualAndDataFimGreaterThanEqual(
+            Long vagaId, StatusOferta status, LocalDate dataFim, LocalDate dataInicio);
+
+    boolean existsByMoradorIdAndStatus(Long moradorId, StatusOferta status);
+
+    boolean existsByVagaIdAndStatus(Long vagaId, StatusOferta status);
 }

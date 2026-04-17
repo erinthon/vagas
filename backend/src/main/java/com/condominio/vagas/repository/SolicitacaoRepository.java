@@ -9,4 +9,5 @@ import java.util.List;
 public interface SolicitacaoRepository extends JpaRepository<Solicitacao, Long> {
     List<Solicitacao> findByStatus(StatusSolicitacao status);
     List<Solicitacao> findByMoradorId(Long moradorId);
+    boolean existsByMoradorIdAndStatus(Long moradorId, StatusSolicitacao status);
 }
