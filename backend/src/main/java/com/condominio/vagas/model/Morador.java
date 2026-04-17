@@ -19,10 +19,8 @@ public class Morador {
     @NotBlank
     private String nome;
 
-    @NotBlank
     private String apartamento;
 
-    @NotBlank
     private String bloco;
 
     @Email
@@ -31,4 +29,17 @@ public class Morador {
     private String email;
 
     private String telefone;
+
+    @Column(unique = true)
+    private String googleId;
+
+    private String fotoPerfil;
+
+    @ManyToOne
+    @JoinColumn(name = "condominio_id")
+    private Condominio condominio;
+
+    @ManyToOne
+    @JoinColumn(name = "cargo_id")
+    private Cargo cargo;
 }

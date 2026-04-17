@@ -16,13 +16,13 @@ vagas/
 
 ## Backend
 
-**Stack:** Spring Boot 3.3, Java 17, JPA/Hibernate, H2 (dev), PostgreSQL (prod), Lombok
+**Stack:** Spring Boot 3.3, Java 17, JPA/Hibernate, MySQL, Lombok, Spring Security + Google OAuth2 + JWT
 
 ```bash
 cd backend
 
-# Run (dev — H2 in-memory)
-./mvnw spring-boot:run
+# Run with local credentials profile
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 
 # Build JAR
 ./mvnw clean package
@@ -32,23 +32,29 @@ cd backend
 ./mvnw test -Dtest=ClassName
 ```
 
-API base: `http://localhost:8080/api`  
-H2 console (dev): `http://localhost:8080/h2-console`
+API base: `http://localhost:8080/api`
+
+**Local config:** Google OAuth2 credentials and DB credentials go in `application-local.properties` (gitignored). The main `application.properties` falls back to env vars `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`.
 
 **Package structure:** `com.condominio.vagas`
-- `model/` — JPA entities: `Morador`, `Vaga`, `Oferta`, `Solicitacao`
+- `model/` — JPA entities: `Morador`, `Vaga`, `Oferta`, `Solicitacao`, `Condominio`, `Cargo`
 - `repository/` — Spring Data JPA interfaces
 - `service/` — business logic
 - `controller/` — REST controllers, one per entity
-- `config/` — CORS (allows `localhost:4200`)
+- `config/` — `SecurityConfig` (JWT filter + OAuth2), `CorsConfig` (allows `localhost:4200`)
+- `security/` — `JwtService`, `JwtAuthFilter`, `OAuth2LoginSuccessHandler`
 
-**Domain flow:** A `Morador` (resident) owns `Vaga`s (parking spots). They can create `Oferta`s (offers) making a vaga available for a date range. Other moradores create `Solicitacao`s (requests) for a period. An admin can call `PATCH /api/solicitacoes/{id}/atender?ofertaId=X` to link a request to an offer, which also auto-closes the offer.
+**Auth flow:**
+1. Frontend redirects to `/oauth2/authorization/google`
+2. On success, `OAuth2LoginSuccessHandler` upserts the `Morador` by `googleId`/`email` and redirects to `{frontendUrl}/auth/callback?token=<JWT>`
+3. All subsequent API calls send `Authorization: Bearer <JWT>`; `JwtAuthFilter` validates and sets the security context
+4. Public endpoints: `/oauth2/**`, `/login/**`, `/api/auth/**`
+
+**Domain flow:** A `Morador` (resident) belongs to a `Condominio` and has a `Cargo` (role). They own `Vaga`s (parking spots) and can create `Oferta`s making a vaga available for a date range. Other moradores create `Solicitacao`s (requests) for a period. An admin calls `PATCH /api/solicitacoes/{id}/atender?ofertaId=X` to link a request to an offer, which also auto-closes the offer.
 
 **Status enums:**
 - `Oferta`: `ATIVA` | `ENCERRADA`
 - `Solicitacao`: `PENDENTE` | `ATENDIDA` | `CANCELADA`
-
-To switch to PostgreSQL, update `application.properties` datasource and change `ddl-auto` to `update`.
 
 ## Frontend
 
@@ -69,7 +75,7 @@ ng test
 
 **Structure:** `src/app/`
 - `models/` — TypeScript interfaces mirroring backend entities
-- `services/` — HTTP services (`MoradorService`, `OfertaService`, `SolicitacaoService`)
-- `pages/` — one standalone component per route: `home`, `ofertas`, `solicitacoes`, `moradores`
+- `services/` — HTTP services per entity
+- `pages/` — one standalone component per route
 
 All services point to `http://localhost:8080/api/*`. Backend CORS is configured for `localhost:4200`.

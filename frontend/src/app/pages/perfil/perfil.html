@@ -1,0 +1,60 @@
+@if (auth.currentUser(); as user) {
+  <div class="perfil-page">
+    <div class="perfil-card">
+      <div class="avatar-section">
+        @if (user.fotoPerfil) {
+          <img [src]="user.fotoPerfil" alt="Foto de perfil" class="avatar" />
+        } @else {
+          <div class="avatar-placeholder">{{ user.nome[0] }}</div>
+        }
+        <div class="user-name">{{ user.nome }}</div>
+        <div class="user-email">{{ user.email }}</div>
+      </div>
+
+      @if (!editando()) {
+        <div class="info-section">
+          <div class="info-row">
+            <span class="label">Apartamento</span>
+            <span class="value">{{ user.apartamento || '—' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Bloco</span>
+            <span class="value">{{ user.bloco || '—' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Telefone</span>
+            <span class="value">{{ user.telefone || '—' }}</span>
+          </div>
+          <button class="btn btn-primary" (click)="startEdit()">Editar perfil</button>
+        </div>
+      } @else {
+        <form class="edit-form" (ngSubmit)="save()">
+          <label>
+            Apartamento
+            <input [(ngModel)]="form.apartamento" name="apartamento" placeholder="ex: 101" />
+          </label>
+          <label>
+            Bloco
+            <input [(ngModel)]="form.bloco" name="bloco" placeholder="ex: A" />
+          </label>
+          <label>
+            Telefone
+            <input [(ngModel)]="form.telefone" name="telefone" placeholder="(00) 00000-0000" />
+          </label>
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" (click)="cancel()">Cancelar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="salvando()">
+              {{ salvando() ? 'Salvando...' : 'Salvar' }}
+            </button>
+          </div>
+        </form>
+      }
+
+      <div class="logout-section">
+        <button class="btn btn-danger-ghost" (click)="auth.logout()">Sair da conta</button>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="loading">Carregando perfil...</div>
+}

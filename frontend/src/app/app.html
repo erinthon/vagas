@@ -1,11 +1,30 @@
 <nav class="navbar">
   <a routerLink="/home" class="brand">🅿 Vagas Condomínio</a>
-  <div class="nav-links">
-    <a routerLink="/home" routerLinkActive="active">Início</a>
-    <a routerLink="/ofertas" routerLinkActive="active">Ofertas</a>
-    <a routerLink="/solicitacoes" routerLinkActive="active">Solicitações</a>
-    <a routerLink="/moradores" routerLinkActive="active">Moradores</a>
-  </div>
+
+  @if (auth.isLoggedIn) {
+    <div class="nav-links">
+      <a routerLink="/home" routerLinkActive="active">Início</a>
+      <a routerLink="/ofertas" routerLinkActive="active">Ofertas</a>
+      <a routerLink="/solicitacoes" routerLinkActive="active">Solicitações</a>
+      <a routerLink="/moradores" routerLinkActive="active">Moradores</a>
+      <a routerLink="/condominios" routerLinkActive="active">Condomínios</a>
+    </div>
+
+    <div class="nav-user">
+      <a routerLink="/perfil" routerLinkActive="active" class="user-link">
+        @if (auth.currentUser()?.fotoPerfil) {
+          <img [src]="auth.currentUser()!.fotoPerfil!" class="user-avatar" alt="avatar" />
+        } @else {
+          <div class="user-avatar-placeholder">{{ auth.currentUser()?.nome?.[0] ?? '?' }}</div>
+        }
+        <span class="user-name">{{ auth.currentUser()?.nome ?? 'Perfil' }}</span>
+      </a>
+    </div>
+  } @else {
+    <div class="nav-links">
+      <a routerLink="/login" class="btn-login">Entrar</a>
+    </div>
+  }
 </nav>
 
 <main>
