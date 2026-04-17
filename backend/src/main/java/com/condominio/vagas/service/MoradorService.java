@@ -13,6 +13,8 @@ import com.condominio.vagas.repository.OfertaRepository;
 import com.condominio.vagas.repository.SolicitacaoRepository;
 import com.condominio.vagas.repository.VagaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -38,7 +40,11 @@ public class MoradorService {
     }
 
     public Morador salvar(Morador morador) {
-        if (morador.getCondominio() == null) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin && morador.getCondominio() == null) {
             throw new RegraDeNegocioException("Morador deve estar vinculado a um condomínio.");
         }
         return moradorRepository.save(morador);

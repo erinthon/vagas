@@ -28,6 +28,7 @@ interface CondominioDetalhe {
       </button>
     </div>
 
+    <!-- FORMULÁRIO CRIAR / EDITAR -->
     @if (mostrarForm()) {
       <div class="form-card">
         <h2>{{ editando() ? 'Editar condomínio #' + editando()!.id : 'Novo condomínio' }}</h2>
@@ -42,14 +43,46 @@ interface CondominioDetalhe {
         </div>
 
         @if (!editando()) {
-          <p class="section-label" style="margin-top:.5rem">Síndico responsável</p>
-          <div class="form-grid">
-            <div class="field"><label>Nome *</label><input [(ngModel)]="form.responsavelNome" /></div>
-            <div class="field"><label>E-mail *</label><input [(ngModel)]="form.responsavelEmail" type="email" /></div>
-            <div class="field"><label>Apartamento *</label><input [(ngModel)]="form.responsavelApartamento" /></div>
-            <div class="field"><label>Bloco *</label><input [(ngModel)]="form.responsavelBloco" /></div>
-            <div class="field"><label>Telefone</label><input [(ngModel)]="form.responsavelTelefone" /></div>
+          <p class="section-label" style="margin-top:.75rem">Síndico responsável *</p>
+
+          <div class="sindico-toggle">
+            <button class="toggle-opt" [class.active]="sindicoModo() === 'selecionar'" (click)="sindicoModo.set('selecionar')">
+              Selecionar morador existente
+            </button>
+            <button class="toggle-opt" [class.active]="sindicoModo() === 'criar'" (click)="sindicoModo.set('criar')">
+              Criar novo síndico
+            </button>
           </div>
+
+          @if (sindicoModo() === 'selecionar') {
+            <div class="form-grid" style="margin-top:.75rem">
+              <div class="field" style="grid-column:span 2">
+                <label>Morador sem condomínio *</label>
+                <select [(ngModel)]="form.moradorId">
+                  <option value="">Selecione um morador...</option>
+                  @for (m of moradesSemCondominio(); track m.id) {
+                    <option [value]="m.id">{{ m.nome }} — {{ m.email }}</option>
+                  }
+                </select>
+                @if (!moradesSemCondominio().length) {
+                  <p class="hint">
+                    Nenhum morador disponível. Use "Criar novo síndico" ou crie um morador sem condomínio na aba
+                    <strong>Moradores</strong> antes de registrar o condomínio.
+                  </p>
+                }
+              </div>
+            </div>
+          }
+
+          @if (sindicoModo() === 'criar') {
+            <div class="form-grid" style="margin-top:.75rem">
+              <div class="field"><label>Nome *</label><input [(ngModel)]="form.responsavelNome" /></div>
+              <div class="field"><label>E-mail *</label><input [(ngModel)]="form.responsavelEmail" type="email" /></div>
+              <div class="field"><label>Apartamento</label><input [(ngModel)]="form.responsavelApartamento" /></div>
+              <div class="field"><label>Bloco</label><input [(ngModel)]="form.responsavelBloco" /></div>
+              <div class="field"><label>Telefone</label><input [(ngModel)]="form.responsavelTelefone" /></div>
+            </div>
+          }
         }
 
         @if (formErro()) { <p class="erro">{{ formErro() }}</p> }
@@ -62,6 +95,7 @@ interface CondominioDetalhe {
       </div>
     }
 
+    <!-- TABELA -->
     @if (carregando()) {
       <p class="loading">Carregando...</p>
     } @else {
@@ -79,7 +113,7 @@ interface CondominioDetalhe {
             @for (c of items(); track c.id) {
               <tr class="main-row" [class.expanded]="expandido() === c.id">
                 <td class="toggle-cell">
-                  <button class="toggle-btn" (click)="toggleExpand(c)" [title]="expandido() === c.id ? 'Recolher' : 'Expandir'">
+                  <button class="toggle-btn" (click)="toggleExpand(c)">
                     {{ expandido() === c.id ? '▼' : '▶' }}
                   </button>
                 </td>
@@ -107,7 +141,6 @@ interface CondominioDetalhe {
                       @if (detalhe(c.id!)?.carregando) {
                         <p class="loading-sm">Carregando detalhes...</p>
                       } @else {
-
                         <div class="detail-cols">
 
                           <!-- MORADORES -->
@@ -143,28 +176,28 @@ interface CondominioDetalhe {
                               <button class="btn-sm-primary" (click)="abrirFormCargo(c.id!)">+ Novo cargo</button>
                             </div>
 
-                            @if (detalhe(c.id!)!.cargoEditando || detalhe(c.id!)!.cargoForm.nome) {
-                              <div class="cargo-form">
-                                <input [(ngModel)]="detalhe(c.id!)!.cargoForm.nome" placeholder="Nome do cargo" class="cargo-input" />
-                                @if (detalhe(c.id!)!.cargoErro) {
-                                  <p class="erro-sm">{{ detalhe(c.id!)!.cargoErro }}</p>
-                                }
-                                <div class="cargo-form-actions">
-                                  <button class="btn-sm-secondary" (click)="cancelarFormCargo(c.id!)">Cancelar</button>
-                                  <button class="btn-sm-primary" (click)="salvarCargo(c.id!)">
-                                    {{ detalhe(c.id!)!.cargoEditando ? 'Atualizar' : 'Criar' }}
-                                  </button>
+                            @if (detalhe(c.id!)!.cargoForm.nome !== null || detalhe(c.id!)!.cargoEditando) {
+                              @if (mostrarFormCargo(c.id!)) {
+                                <div class="cargo-form">
+                                  <input [(ngModel)]="detalhe(c.id!)!.cargoForm.nome" placeholder="Nome do cargo" class="cargo-input" />
+                                  @if (detalhe(c.id!)!.cargoErro) {
+                                    <p class="erro-sm">{{ detalhe(c.id!)!.cargoErro }}</p>
+                                  }
+                                  <div class="cargo-form-actions">
+                                    <button class="btn-sm-secondary" (click)="cancelarFormCargo(c.id!)">Cancelar</button>
+                                    <button class="btn-sm-primary" (click)="salvarCargo(c.id!)">
+                                      {{ detalhe(c.id!)!.cargoEditando ? 'Atualizar' : 'Criar' }}
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
+                              }
                             }
 
                             @if (!detalhe(c.id!)?.cargos?.length) {
                               <p class="empty">Nenhum cargo cadastrado.</p>
                             } @else {
                               <table class="inner-table">
-                                <thead>
-                                  <tr><th>Nome</th><th>Ações</th></tr>
-                                </thead>
+                                <thead><tr><th>Nome</th><th>Ações</th></tr></thead>
                                 <tbody>
                                   @for (cargo of detalhe(c.id!)!.cargos; track cargo.id) {
                                     <tr>
@@ -203,9 +236,14 @@ interface CondominioDetalhe {
     .form-card h2 { margin: 0 0 1rem; font-size: 1rem; color: #1e293b; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; margin-bottom: 1rem; }
     .field label { display: block; font-size: .75rem; color: #64748b; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .3rem; font-weight: 600; }
-    .field input { width: 100%; padding: .55rem .8rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: .875rem; outline: none; box-sizing: border-box; }
-    .field input:focus { border-color: #3b82f6; }
-    .form-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: .5rem; }
+    .field input, .field select { width: 100%; padding: .55rem .8rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: .875rem; outline: none; box-sizing: border-box; }
+    .field input:focus, .field select:focus { border-color: #3b82f6; }
+    .sindico-toggle { display: flex; gap: 0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; width: fit-content; }
+    .toggle-opt { padding: .45rem 1rem; font-size: .82rem; border: none; background: #f8fafc; color: #64748b; cursor: pointer; font-weight: 500; }
+    .toggle-opt:hover { background: #f1f5f9; }
+    .toggle-opt.active { background: #3b82f6; color: white; }
+    .hint { color: #94a3b8; font-size: .8rem; margin-top: .4rem; }
+    .form-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: .75rem; }
     .erro { color: #dc2626; font-size: .85rem; margin: .5rem 0; }
     .erro-sm { color: #dc2626; font-size: .78rem; margin: .3rem 0; }
     .btn-primary { background: #3b82f6; color: white; border: none; border-radius: 8px; padding: .5rem 1.1rem; font-size: .875rem; font-weight: 600; cursor: pointer; }
@@ -217,7 +255,6 @@ interface CondominioDetalhe {
     table { width: 100%; border-collapse: collapse; font-size: .875rem; }
     th { background: #f1f5f9; color: #475569; font-weight: 600; padding: .75rem 1rem; text-align: left; white-space: nowrap; }
     td { padding: .65rem 1rem; border-top: 1px solid #f1f5f9; color: #334155; }
-    .main-row { cursor: default; }
     .main-row:hover td { background: #f8fafc; }
     .main-row.expanded td { background: #f0f9ff; border-bottom: none; }
     .toggle-cell { padding: .65rem .5rem; }
@@ -262,73 +299,54 @@ interface CondominioDetalhe {
 export class AdminCondominios implements OnInit {
   private readonly service = inject(AdminPainelService);
 
-  carregando  = signal(true);
-  salvando    = signal(false);
-  mostrarForm = signal(false);
-  editando    = signal<Condominio | null>(null);
-  formErro    = signal('');
-  expandido   = signal<number | null>(null);
-  items       = signal<Condominio[]>([]);
+  carregando   = signal(true);
+  salvando     = signal(false);
+  mostrarForm  = signal(false);
+  editando     = signal<Condominio | null>(null);
+  formErro     = signal('');
+  expandido    = signal<number | null>(null);
+  sindicoModo  = signal<'selecionar' | 'criar'>('selecionar');
+  items        = signal<Condominio[]>([]);
 
   private detalhes = new Map<number, CondominioDetalhe>();
-  private todosmoradores: Morador[] = [];
+  private formCargosAbertos = new Set<number>();
+  private todosMoradores: Morador[] = [];
   private todosCargos: Cargo[] = [];
 
   form = emptyForm();
 
+  moradesSemCondominio() {
+    return this.todosMoradores.filter(m => !m.condominio);
+  }
+
   ngOnInit() {
     forkJoin({ c: this.service.condominios(), m: this.service.moradores(), g: this.service.cargos() }).subscribe({
-      next: r => {
-        this.items.set(r.c);
-        this.todosmoradores = r.m;
-        this.todosCargos = r.g;
-        this.carregando.set(false);
-      },
+      next: r => { this.items.set(r.c); this.todosMoradores = r.m; this.todosCargos = r.g; this.carregando.set(false); },
       error: () => this.carregando.set(false)
     });
   }
 
-  contarMoradores(condominioId: number) {
-    return this.todosmoradores.filter(m => m.condominio?.id === condominioId).length;
-  }
-
-  contarCargos(condominioId: number) {
-    return this.todosCargos.filter(c => c.condominio?.id === condominioId).length;
-  }
-
-  detalhe(condominioId: number): CondominioDetalhe | undefined {
-    return this.detalhes.get(condominioId);
-  }
+  contarMoradores(id: number) { return this.todosMoradores.filter(m => m.condominio?.id === id).length; }
+  contarCargos(id: number)    { return this.todosCargos.filter(c => c.condominio?.id === id).length; }
+  detalhe(id: number)         { return this.detalhes.get(id); }
+  mostrarFormCargo(id: number){ return this.formCargosAbertos.has(id); }
 
   toggleExpand(c: Condominio) {
-    if (this.expandido() === c.id) {
-      this.expandido.set(null);
-      return;
-    }
+    if (this.expandido() === c.id) { this.expandido.set(null); return; }
     this.expandido.set(c.id!);
     if (!this.detalhes.has(c.id!)) {
       this.detalhes.set(c.id!, { moradores: [], cargos: [], carregando: true, cargoForm: { nome: '' }, cargoEditando: null, cargoErro: '' });
       forkJoin({ m: this.service.moradoresDeCondominio(c.id!), g: this.service.cargosDeCondominio(c.id!) }).subscribe({
-        next: r => {
-          const d = this.detalhes.get(c.id!)!;
-          d.moradores = r.m;
-          d.cargos = r.g;
-          d.carregando = false;
-          this.items.update(v => [...v]);
-        },
-        error: () => {
-          const d = this.detalhes.get(c.id!)!;
-          d.carregando = false;
-          this.items.update(v => [...v]);
-        }
+        next: r => { const d = this.detalhes.get(c.id!)!; d.moradores = r.m; d.cargos = r.g; d.carregando = false; this.items.update(v => [...v]); },
+        error: () => { const d = this.detalhes.get(c.id!)!; d.carregando = false; this.items.update(v => [...v]); }
       });
     }
   }
 
-  // --- form condomínio ---
+  // --- condomínio CRUD ---
   abrirNovo() {
     if (this.mostrarForm() && !this.editando()) { this.fecharForm(); return; }
-    this.editando.set(null); this.form = emptyForm(); this.formErro.set(''); this.mostrarForm.set(true);
+    this.editando.set(null); this.form = emptyForm(); this.formErro.set(''); this.sindicoModo.set('selecionar'); this.mostrarForm.set(true);
   }
 
   editar(c: Condominio) {
@@ -342,13 +360,26 @@ export class AdminCondominios implements OnInit {
   salvar() {
     if (!this.form.nome) { this.formErro.set('Nome é obrigatório.'); return; }
     const ed = this.editando();
-    if (!ed && (!this.form.responsavelNome || !this.form.responsavelEmail || !this.form.responsavelApartamento || !this.form.responsavelBloco)) {
-      this.formErro.set('Preencha todos os campos obrigatórios do síndico.'); return;
+    if (!ed) {
+      if (this.sindicoModo() === 'selecionar' && !this.form.moradorId) {
+        this.formErro.set('Selecione um morador como síndico.'); return;
+      }
+      if (this.sindicoModo() === 'criar' && (!this.form.responsavelNome || !this.form.responsavelEmail)) {
+        this.formErro.set('Nome e e-mail do síndico são obrigatórios.'); return;
+      }
     }
     this.salvando.set(true); this.formErro.set('');
-    const req$ = ed
-      ? this.service.atualizarCondominio(ed.id!, { nome: this.form.nome, cnpj: this.form.cnpj, endereco: this.form.endereco, telefone: this.form.telefone, email: this.form.email })
-      : this.service.criarCondominio(this.form);
+
+    let payload: any = { nome: this.form.nome, cnpj: this.form.cnpj || null, endereco: this.form.endereco || null, telefone: this.form.telefone || null, email: this.form.email || null };
+    if (!ed) {
+      if (this.sindicoModo() === 'selecionar') {
+        payload['moradorId'] = +this.form.moradorId;
+      } else {
+        payload = { ...payload, responsavelNome: this.form.responsavelNome, responsavelEmail: this.form.responsavelEmail, responsavelApartamento: this.form.responsavelApartamento || null, responsavelBloco: this.form.responsavelBloco || null, responsavelTelefone: this.form.responsavelTelefone || null };
+      }
+    }
+
+    const req$ = ed ? this.service.atualizarCondominio(ed.id!, payload) : this.service.criarCondominio(payload);
     req$.subscribe({
       next: () => { this.salvando.set(false); this.fecharForm(); this.recarregarTudo(); },
       error: err => { this.salvando.set(false); this.formErro.set(err?.error?.message || 'Erro ao salvar.'); }
@@ -356,72 +387,60 @@ export class AdminCondominios implements OnInit {
   }
 
   deletar(c: Condominio) {
-    if (!confirm(`Excluir condomínio "${c.nome}"? Esta ação removerá todos os dados associados.`)) return;
+    if (!confirm(`Excluir condomínio "${c.nome}"?`)) return;
     this.service.deletarCondominio(c.id!).subscribe({
       next: () => this.recarregarTudo(),
       error: err => alert(err?.error?.message || 'Erro ao excluir.')
     });
   }
 
-  // --- form cargo inline ---
-  abrirFormCargo(condominioId: number) {
-    const d = this.detalhes.get(condominioId);
-    if (!d) return;
-    d.cargoEditando = null;
-    d.cargoForm.nome = d.cargoForm.nome ? '' : ' ';
-    d.cargoForm.nome = '';
-    d.cargoErro = '';
+  // --- cargo inline ---
+  abrirFormCargo(id: number) {
+    const d = this.detalhes.get(id); if (!d) return;
+    d.cargoEditando = null; d.cargoForm.nome = ''; d.cargoErro = '';
+    this.formCargosAbertos.add(id);
     this.items.update(v => [...v]);
   }
 
-  editarCargo(condominioId: number, cargo: Cargo) {
-    const d = this.detalhes.get(condominioId);
-    if (!d) return;
-    d.cargoEditando = cargo;
-    d.cargoForm.nome = cargo.nome;
-    d.cargoErro = '';
+  editarCargo(id: number, cargo: Cargo) {
+    const d = this.detalhes.get(id); if (!d) return;
+    d.cargoEditando = cargo; d.cargoForm.nome = cargo.nome; d.cargoErro = '';
+    this.formCargosAbertos.add(id);
     this.items.update(v => [...v]);
   }
 
-  cancelarFormCargo(condominioId: number) {
-    const d = this.detalhes.get(condominioId);
-    if (!d) return;
-    d.cargoEditando = null;
-    d.cargoForm.nome = '';
-    d.cargoErro = '';
+  cancelarFormCargo(id: number) {
+    const d = this.detalhes.get(id); if (!d) return;
+    d.cargoEditando = null; d.cargoForm.nome = ''; d.cargoErro = '';
+    this.formCargosAbertos.delete(id);
     this.items.update(v => [...v]);
   }
 
-  salvarCargo(condominioId: number) {
-    const d = this.detalhes.get(condominioId);
-    if (!d || !d.cargoForm.nome.trim()) { if (d) d.cargoErro = 'Nome é obrigatório.'; this.items.update(v => [...v]); return; }
-    const payload = { nome: d.cargoForm.nome.trim(), condominio: { id: condominioId } };
-    const req$ = d.cargoEditando
-      ? this.service.atualizarCargo(condominioId, d.cargoEditando.id!, payload)
-      : this.service.criarCargo(condominioId, payload);
+  salvarCargo(id: number) {
+    const d = this.detalhes.get(id);
+    if (!d || !d.cargoForm.nome.trim()) { if (d) { d.cargoErro = 'Nome é obrigatório.'; this.items.update(v => [...v]); } return; }
+    const payload = { nome: d.cargoForm.nome.trim(), condominio: { id } };
+    const req$ = d.cargoEditando ? this.service.atualizarCargo(id, d.cargoEditando.id!, payload) : this.service.criarCargo(id, payload);
     req$.subscribe({
-      next: () => {
-        d.cargoEditando = null; d.cargoForm.nome = ''; d.cargoErro = '';
-        this.recarregarDetalhe(condominioId);
-      },
+      next: () => { d.cargoEditando = null; d.cargoForm.nome = ''; d.cargoErro = ''; this.formCargosAbertos.delete(id); this.recarregarDetalhe(id); },
       error: err => { d.cargoErro = err?.error?.message || 'Erro ao salvar.'; this.items.update(v => [...v]); }
     });
   }
 
-  excluirCargo(condominioId: number, cargo: Cargo) {
+  excluirCargo(id: number, cargo: Cargo) {
     if (!confirm(`Excluir cargo "${cargo.nome}"?`)) return;
-    this.service.excluirCargo(condominioId, cargo.id!).subscribe({
-      next: () => this.recarregarDetalhe(condominioId),
+    this.service.excluirCargo(id, cargo.id!).subscribe({
+      next: () => this.recarregarDetalhe(id),
       error: err => alert(err?.error?.message || 'Erro ao excluir.')
     });
   }
 
-  private recarregarDetalhe(condominioId: number) {
-    forkJoin({ m: this.service.moradoresDeCondominio(condominioId), g: this.service.cargosDeCondominio(condominioId) }).subscribe({
+  private recarregarDetalhe(id: number) {
+    forkJoin({ m: this.service.moradoresDeCondominio(id), g: this.service.cargosDeCondominio(id) }).subscribe({
       next: r => {
-        const d = this.detalhes.get(condominioId);
+        const d = this.detalhes.get(id);
         if (d) { d.moradores = r.m; d.cargos = r.g; }
-        this.todosCargos = [...this.todosCargos.filter(c => c.condominio?.id !== condominioId), ...r.g];
+        this.todosCargos = [...this.todosCargos.filter(c => c.condominio?.id !== id), ...r.g];
         this.items.update(v => [...v]);
       }
     });
@@ -429,11 +448,11 @@ export class AdminCondominios implements OnInit {
 
   private recarregarTudo() {
     forkJoin({ c: this.service.condominios(), m: this.service.moradores(), g: this.service.cargos() }).subscribe({
-      next: r => { this.items.set(r.c); this.todosmoradores = r.m; this.todosCargos = r.g; this.detalhes.clear(); }
+      next: r => { this.items.set(r.c); this.todosMoradores = r.m; this.todosCargos = r.g; this.detalhes.clear(); this.formCargosAbertos.clear(); }
     });
   }
 }
 
 function emptyForm() {
-  return { nome: '', cnpj: '', endereco: '', telefone: '', email: '', responsavelNome: '', responsavelEmail: '', responsavelApartamento: '', responsavelBloco: '', responsavelTelefone: '' };
+  return { nome: '', cnpj: '', endereco: '', telefone: '', email: '', moradorId: '' as any, responsavelNome: '', responsavelEmail: '', responsavelApartamento: '', responsavelBloco: '', responsavelTelefone: '' };
 }
