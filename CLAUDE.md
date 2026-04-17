@@ -79,3 +79,22 @@ ng test
 - `pages/` — one standalone component per route
 
 All services point to `http://localhost:8080/api/*`. Backend CORS is configured for `localhost:4200`.
+
+## Git Flow
+
+This project follows GitFlow strictly. Always respect the branch hierarchy below.
+
+```
+main        ← production releases only (merge from release/*)
+develop     ← integration branch; base for all features
+feature/*   ← new features (branch off develop, PR back to develop)
+release/*   ← release preparation (branch off develop, merge to main + develop)
+hotfix/*    ← urgent production fixes (branch off main, merge to main + develop)
+```
+
+**Rules:**
+- New features: `git checkout develop && git pull && git checkout -b feature/<name>`
+- PRs always target `develop`, never `main` directly
+- Never commit directly to `main` or `develop`
+- Before opening a PR, update the branch with latest develop: `git merge develop`
+- `main` only receives merges from `release/*` or `hotfix/*` branches
