@@ -6,6 +6,7 @@ import com.condominio.vagas.model.Condominio;
 import com.condominio.vagas.model.Morador;
 import com.condominio.vagas.model.Oferta;
 import com.condominio.vagas.model.Solicitacao;
+import com.condominio.vagas.repository.CargoRepository;
 import com.condominio.vagas.repository.CondominioRepository;
 import com.condominio.vagas.repository.MoradorRepository;
 import com.condominio.vagas.repository.OfertaRepository;
@@ -25,6 +26,7 @@ public class MoradorService {
     private final OfertaRepository ofertaRepository;
     private final SolicitacaoRepository solicitacaoRepository;
     private final CondominioRepository condominioRepository;
+    private final CargoRepository cargoRepository;
 
     public List<Morador> listarTodos() {
         return moradorRepository.findAll();
@@ -49,6 +51,10 @@ public class MoradorService {
         morador.setBloco(dados.getBloco());
         morador.setEmail(dados.getEmail());
         morador.setTelefone(dados.getTelefone());
+        if (dados.getCargo() != null && dados.getCargo().getId() != null) {
+            cargoRepository.findById(dados.getCargo().getId())
+                    .ifPresent(morador::setCargo);
+        }
         return moradorRepository.save(morador);
     }
 

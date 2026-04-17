@@ -19,12 +19,13 @@ public class JwtService {
     @Value("${jwt.expiration-ms}")
     private long expirationMs;
 
-    public String generateToken(Long moradorId, String email, String nome) {
+    public String generateToken(Long id, String email, String nome, String role) {
         SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         return Jwts.builder()
-                .subject(String.valueOf(moradorId))
+                .subject(String.valueOf(id))
                 .claim("email", email)
                 .claim("nome", nome)
+                .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(key)
@@ -36,7 +37,11 @@ public class JwtService {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
     }
 
-    public Long getMoradorId(String token) {
+    public Long getId(String token) {
         return Long.valueOf(parseToken(token).getSubject());
+    }
+
+    public String getRole(String token) {
+        return parseToken(token).get("role", String.class);
     }
 }
