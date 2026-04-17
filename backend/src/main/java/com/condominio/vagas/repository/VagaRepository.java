@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface VagaRepository extends JpaRepository<Vaga, Long> {
     List<Vaga> findByProprietarioId(Long moradorId);
+    boolean existsByProprietarioId(Long moradorId);
+    int countByProprietarioId(Long moradorId);
 }

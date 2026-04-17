@@ -1,5 +1,6 @@
 package com.condominio.vagas.service;
 
+import com.condominio.vagas.exception.RegraDeNegocioException;
 import com.condominio.vagas.model.Oferta;
 import com.condominio.vagas.model.Solicitacao;
 import com.condominio.vagas.model.Solicitacao.StatusSolicitacao;
@@ -7,6 +8,7 @@ import com.condominio.vagas.repository.SolicitacaoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -30,12 +32,33 @@ public class SolicitacaoService {
     }
 
     public Solicitacao salvar(Solicitacao solicitacao) {
+        // Regra 7: morador precisa estar vinculado a um condomínio
+        if (solicitacao.getMorador().getCondominio() == null) {
+            throw new RegraDeNegocioException("Morador não está vinculado a nenhum condomínio.");
+        }
+
+        // Regra 3: datas válidas
+        if (!solicitacao.getDataInicio().isBefore(solicitacao.getDataFim())) {
+            throw new RegraDeNegocioException("A data de início deve ser anterior à data de fim.");
+        }
+        if (solicitacao.getDataInicio().isBefore(LocalDate.now())) {
+            throw new RegraDeNegocioException("A data de início não pode ser no passado.");
+        }
+
         return solicitacaoRepository.save(solicitacao);
     }
 
     public Solicitacao atender(Long solicitacaoId, Long ofertaId) {
         Solicitacao solicitacao = buscarPorId(solicitacaoId);
         Oferta oferta = ofertaService.buscarPorId(ofertaId);
+
+        // Regra 4: período da oferta deve cobrir o período da solicitação
+        if (oferta.getDataInicio().isAfter(solicitacao.getDataInicio()) ||
+            oferta.getDataFim().isBefore(solicitacao.getDataFim())) {
+            throw new RegraDeNegocioException(
+                    "O período da oferta não cobre o período da solicitação.");
+        }
+
         solicitacao.setStatus(StatusSolicitacao.ATENDIDA);
         solicitacao.setOfertaAtendida(oferta);
         ofertaService.encerrar(ofertaId);
@@ -44,6 +67,12 @@ public class SolicitacaoService {
 
     public Solicitacao cancelar(Long id) {
         Solicitacao solicitacao = buscarPorId(id);
+
+        // Regra 5: apenas solicitações pendentes podem ser canceladas
+        if (solicitacao.getStatus() != StatusSolicitacao.PENDENTE) {
+            throw new RegraDeNegocioException("Apenas solicitações pendentes podem ser canceladas.");
+        }
+
         solicitacao.setStatus(StatusSolicitacao.CANCELADA);
         return solicitacaoRepository.save(solicitacao);
     }
