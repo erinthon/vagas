@@ -58,4 +58,10 @@ export class AdminPainelService {
   criarUsuario(data: { username: string; nome: string; email: string; senha: string }) {
     return this.http.post<AdminUser>(`${ADMIN}/usuarios`, data);
   }
+  atualizarUsuario(id: number, data: { nome: string; email: string; senha?: string }) {
+    return this.http.put<AdminUser>(`${ADMIN}/usuarios/${id}`, data);
+  }
+  excluirUsuario(id: number) {
+    return this.http.delete<void>(`${ADMIN}/usuarios/${id}`);
+  }
 }

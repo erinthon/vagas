@@ -2,6 +2,7 @@ package com.condominio.vagas.service;
 
 import com.condominio.vagas.dto.AdminLoginRequest;
 import com.condominio.vagas.dto.AdminUserRequest;
+import com.condominio.vagas.dto.AdminUserUpdateRequest;
 import com.condominio.vagas.exception.RegraDeNegocioException;
 import com.condominio.vagas.model.AdminUser;
 import com.condominio.vagas.repository.AdminUserRepository;
@@ -42,6 +43,24 @@ public class AdminUserService {
         admin.setEmail(request.getEmail());
         admin.setSenha(passwordEncoder.encode(request.getSenha()));
         return adminUserRepository.save(admin);
+    }
+
+    public AdminUser atualizar(Long id, AdminUserUpdateRequest request) {
+        AdminUser admin = adminUserRepository.findById(id)
+                .orElseThrow(() -> new RegraDeNegocioException("Usuário não encontrado."));
+        admin.setNome(request.getNome());
+        admin.setEmail(request.getEmail());
+        if (request.getSenha() != null && !request.getSenha().isBlank()) {
+            admin.setSenha(passwordEncoder.encode(request.getSenha()));
+        }
+        return adminUserRepository.save(admin);
+    }
+
+    public void excluir(Long id) {
+        if (adminUserRepository.count() <= 1) {
+            throw new RegraDeNegocioException("Não é possível excluir o único usuário administrador.");
+        }
+        adminUserRepository.deleteById(id);
     }
 
     public List<AdminUser> listar() {
