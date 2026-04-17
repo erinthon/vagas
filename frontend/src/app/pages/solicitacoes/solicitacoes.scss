@@ -6,12 +6,31 @@
   margin-bottom: 1.25rem;
 }
 
-.select-oferta {
-  padding: .3rem .5rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: .8rem;
-  min-width: 200px;
+.confirm-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  background: #fef3e2;
+  border-color: #f9d58b;
+  padding: .75rem 1rem;
+  font-size: .875rem;
+}
+
+.section-title {
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 1.25rem 0 .5rem;
+  padding-bottom: .35rem;
+  border-bottom: 1px solid var(--border);
+
+  &--muted { color: var(--text-muted); margin-top: 1.75rem; }
+}
+
+.table-muted {
+  opacity: .65;
 }
 
 textarea { resize: vertical; }

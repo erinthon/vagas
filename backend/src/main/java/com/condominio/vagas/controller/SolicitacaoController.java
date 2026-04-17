@@ -1,10 +1,12 @@
 package com.condominio.vagas.controller;
 
+import com.condominio.vagas.model.Morador;
 import com.condominio.vagas.model.Solicitacao;
 import com.condominio.vagas.service.SolicitacaoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +17,22 @@ import java.util.List;
 public class SolicitacaoController {
 
     private final SolicitacaoService solicitacaoService;
+
+    @GetMapping("/minhas")
+    public List<Solicitacao> listarMinhas(Authentication authentication) {
+        Long moradorId = (Long) authentication.getPrincipal();
+        return solicitacaoService.listarPorMorador(moradorId);
+    }
+
+    @PostMapping("/minhas")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Solicitacao criarMinha(@Valid @RequestBody Solicitacao solicitacao, Authentication authentication) {
+        Long moradorId = (Long) authentication.getPrincipal();
+        Morador morador = new Morador();
+        morador.setId(moradorId);
+        solicitacao.setMorador(morador);
+        return solicitacaoService.salvar(solicitacao);
+    }
 
     @GetMapping
     public List<Solicitacao> listarPendentes() {

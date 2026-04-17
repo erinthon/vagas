@@ -1,103 +1,117 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { OfertaService } from '../../services/oferta';
-import { MoradorService } from '../../services/morador';
 import { VagaService } from '../../services/api';
 import { Oferta } from '../../models/oferta.model';
-import { Morador } from '../../models/morador.model';
 import { Vaga } from '../../models/vaga.model';
 
 @Component({
   selector: 'app-ofertas',
-  imports: [FormsModule, DatePipe],
+  standalone: true,
+  imports: [FormsModule, DatePipe, RouterLink],
   templateUrl: './ofertas.html',
   styleUrl: './ofertas.scss',
 })
 export class Ofertas implements OnInit {
-  ofertas: Oferta[] = [];
-  moradores: Morador[] = [];
-  vagas: Vaga[] = [];
-  erro = '';
 
-  showForm = false;
-  formOferta = this.ofertaVazia();
-  moradorSelecionadoId: number | null = null;
+  ofertas = signal<Oferta[]>([]);
+  minhasVagas = signal<Vaga[]>([]);
+  carregando = signal(true);
+  salvando = signal(false);
+  erro = signal<string | null>(null);
+  showForm = signal(false);
+  encerrandoId = signal<number | null>(null);
 
-  filtroInicio = '';
-  filtroFim = '';
+  ofertasAtivas = computed(() => this.ofertas().filter(o => o.status === 'ATIVA'));
+  ofertasEncerradas = computed(() => this.ofertas().filter(o => o.status === 'ENCERRADA'));
+
+  form: { vagaId: number | null; dataInicio: string; dataFim: string; observacao: string } = {
+    vagaId: null,
+    dataInicio: '',
+    dataFim: '',
+    observacao: ''
+  };
 
   constructor(
     private ofertaService: OfertaService,
-    private moradorService: MoradorService,
     private vagaService: VagaService
   ) {}
 
   ngOnInit(): void {
-    this.carregarOfertas();
-    this.moradorService.listar().subscribe(d => this.moradores = d);
-    this.vagaService.listar().subscribe(d => this.vagas = d);
+    this.carregar();
+    this.vagaService.minhasVagas().subscribe(v => this.minhasVagas.set(v));
   }
 
-  carregarOfertas(): void {
-    this.ofertaService.listar(this.filtroInicio || undefined, this.filtroFim || undefined).subscribe({
-      next: (data) => this.ofertas = data,
-      error: () => this.erro = 'Erro ao carregar ofertas.'
+  private carregar(): void {
+    this.carregando.set(true);
+    this.ofertaService.minhasOfertas().subscribe({
+      next: data => { this.ofertas.set(data); this.carregando.set(false); },
+      error: () => this.carregando.set(false)
     });
   }
 
-  filtrar(): void { this.carregarOfertas(); }
-
-  limparFiltro(): void {
-    this.filtroInicio = '';
-    this.filtroFim = '';
-    this.carregarOfertas();
-  }
-
-  vagasDoMorador(): Vaga[] {
-    if (!this.moradorSelecionadoId) return [];
-    return this.vagas.filter(v => v.proprietario?.id === Number(this.moradorSelecionadoId));
-  }
-
-  onMoradorChange(): void {
-    this.formOferta.vaga = { numero: 0, tipo: 'DESCOBERTA' };
-    const m = this.moradores.find(m => m.id === Number(this.moradorSelecionadoId));
-    this.formOferta.morador = m ?? { nome: '', apartamento: '', bloco: '', email: '' };
-  }
-
-  salvarOferta(): void {
-    const payload: Oferta = {
-      ...this.formOferta,
-      morador: this.moradores.find(m => m.id === Number(this.moradorSelecionadoId))!,
-    };
-    this.ofertaService.criar(payload).subscribe({
-      next: () => { this.carregarOfertas(); this.cancelarForm(); },
-      error: () => this.erro = 'Erro ao criar oferta.'
-    });
-  }
-
-  encerrar(id: number): void {
-    if (!confirm('Encerrar esta oferta?')) return;
-    this.ofertaService.encerrar(id).subscribe({
-      next: () => this.carregarOfertas(),
-      error: () => this.erro = 'Erro ao encerrar oferta.'
-    });
+  abrirForm(): void {
+    this.form = { vagaId: null, dataInicio: '', dataFim: '', observacao: '' };
+    this.erro.set(null);
+    this.showForm.set(true);
   }
 
   cancelarForm(): void {
-    this.showForm = false;
-    this.formOferta = this.ofertaVazia();
-    this.moradorSelecionadoId = null;
-    this.erro = '';
+    this.showForm.set(false);
+    this.erro.set(null);
   }
 
-  private ofertaVazia(): Oferta {
-    return {
-      morador: { nome: '', apartamento: '', bloco: '', email: '' },
-      vaga: { numero: 0, tipo: 'DESCOBERTA' },
-      dataInicio: '',
-      dataFim: '',
-      observacao: ''
-    };
+  salvar(): void {
+    if (!this.form.vagaId || !this.form.dataInicio || !this.form.dataFim) return;
+    this.salvando.set(true);
+    this.erro.set(null);
+
+    this.ofertaService.criarMinha({
+      vaga: { id: this.form.vagaId },
+      dataInicio: this.form.dataInicio,
+      dataFim: this.form.dataFim,
+      observacao: this.form.observacao || undefined
+    }).subscribe({
+      next: () => {
+        this.carregar();
+        this.showForm.set(false);
+        this.salvando.set(false);
+      },
+      error: (err) => {
+        this.erro.set(err.error?.message ?? 'Erro ao criar oferta.');
+        this.salvando.set(false);
+      }
+    });
+  }
+
+  confirmarEncerrar(id: number): void {
+    this.encerrandoId.set(id);
+  }
+
+  encerrar(): void {
+    const id = this.encerrandoId()!;
+    this.salvando.set(true);
+    this.ofertaService.encerrar(id).subscribe({
+      next: () => {
+        this.carregar();
+        this.encerrandoId.set(null);
+        this.salvando.set(false);
+      },
+      error: () => {
+        this.erro.set('Erro ao encerrar oferta.');
+        this.encerrandoId.set(null);
+        this.salvando.set(false);
+      }
+    });
+  }
+
+  cancelarEncerrar(): void {
+    this.encerrandoId.set(null);
+  }
+
+  hoje(): string {
+    return new Date().toISOString().split('T')[0];
   }
 }

@@ -1,110 +1,107 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { SolicitacaoService } from '../../services/solicitacao';
-import { MoradorService } from '../../services/morador';
-import { OfertaService } from '../../services/oferta';
 import { Solicitacao } from '../../models/solicitacao.model';
-import { Morador } from '../../models/morador.model';
-import { Oferta } from '../../models/oferta.model';
 
 @Component({
   selector: 'app-solicitacoes',
+  standalone: true,
   imports: [FormsModule, DatePipe],
   templateUrl: './solicitacoes.html',
   styleUrl: './solicitacoes.scss',
 })
 export class Solicitacoes implements OnInit {
-  solicitacoes: Solicitacao[] = [];
-  moradores: Morador[] = [];
-  ofertasAtivas: Oferta[] = [];
-  erro = '';
 
-  showForm = false;
-  formSolicitacao = this.solicitacaoVazia();
-  moradorSelecionadoId: number | null = null;
+  solicitacoes = signal<Solicitacao[]>([]);
+  carregando = signal(true);
+  salvando = signal(false);
+  erro = signal<string | null>(null);
+  showForm = signal(false);
+  cancelandoId = signal<number | null>(null);
 
-  atendendoId: number | null = null;
-  ofertaSelecionadaId: number | null = null;
+  pendentes = computed(() => this.solicitacoes().filter(s => s.status === 'PENDENTE'));
+  historico = computed(() => this.solicitacoes().filter(s => s.status !== 'PENDENTE'));
 
-  constructor(
-    private solicitacaoService: SolicitacaoService,
-    private moradorService: MoradorService,
-    private ofertaService: OfertaService
-  ) {}
+  form: { dataInicio: string; dataFim: string; observacao: string } = {
+    dataInicio: '',
+    dataFim: '',
+    observacao: ''
+  };
+
+  constructor(private solicitacaoService: SolicitacaoService) {}
 
   ngOnInit(): void {
-    this.carregarSolicitacoes();
-    this.moradorService.listar().subscribe(d => this.moradores = d);
-    this.ofertaService.listar().subscribe(d => this.ofertasAtivas = d);
+    this.carregar();
   }
 
-  carregarSolicitacoes(): void {
-    this.solicitacaoService.listarPendentes().subscribe({
-      next: (data) => this.solicitacoes = data,
-      error: () => this.erro = 'Erro ao carregar solicitações.'
+  private carregar(): void {
+    this.carregando.set(true);
+    this.solicitacaoService.minhasSolicitacoes().subscribe({
+      next: data => { this.solicitacoes.set(data); this.carregando.set(false); },
+      error: () => this.carregando.set(false)
     });
   }
 
-  onMoradorChange(): void {
-    const m = this.moradores.find(m => m.id === Number(this.moradorSelecionadoId));
-    this.formSolicitacao.morador = m ?? { nome: '', apartamento: '', bloco: '', email: '' };
-  }
-
-  salvarSolicitacao(): void {
-    const payload: Solicitacao = {
-      ...this.formSolicitacao,
-      morador: this.moradores.find(m => m.id === Number(this.moradorSelecionadoId))!,
-    };
-    this.solicitacaoService.criar(payload).subscribe({
-      next: () => { this.carregarSolicitacoes(); this.cancelarForm(); },
-      error: () => this.erro = 'Erro ao criar solicitação.'
-    });
-  }
-
-  iniciarAtendimento(id: number): void {
-    this.atendendoId = id;
-    this.ofertaSelecionadaId = null;
-  }
-
-  confirmarAtendimento(): void {
-    if (!this.atendendoId || !this.ofertaSelecionadaId) return;
-    this.solicitacaoService.atender(this.atendendoId, this.ofertaSelecionadaId).subscribe({
-      next: () => {
-        this.carregarSolicitacoes();
-        this.ofertaService.listar().subscribe(d => this.ofertasAtivas = d);
-        this.cancelarAtendimento();
-      },
-      error: () => this.erro = 'Erro ao atender solicitação.'
-    });
-  }
-
-  cancelarAtendimento(): void {
-    this.atendendoId = null;
-    this.ofertaSelecionadaId = null;
-  }
-
-  cancelarSolicitacao(id: number): void {
-    if (!confirm('Cancelar esta solicitação?')) return;
-    this.solicitacaoService.cancelar(id).subscribe({
-      next: () => this.carregarSolicitacoes(),
-      error: () => this.erro = 'Erro ao cancelar solicitação.'
-    });
+  abrirForm(): void {
+    this.form = { dataInicio: '', dataFim: '', observacao: '' };
+    this.erro.set(null);
+    this.showForm.set(true);
   }
 
   cancelarForm(): void {
-    this.showForm = false;
-    this.formSolicitacao = this.solicitacaoVazia();
-    this.moradorSelecionadoId = null;
-    this.erro = '';
+    this.showForm.set(false);
+    this.erro.set(null);
   }
 
-  private solicitacaoVazia(): Solicitacao {
-    return {
-      morador: { nome: '', apartamento: '', bloco: '', email: '' },
-      dataInicio: '',
-      dataFim: '',
-      observacao: ''
-    };
+  salvar(): void {
+    if (!this.form.dataInicio || !this.form.dataFim) return;
+    this.salvando.set(true);
+    this.erro.set(null);
+
+    this.solicitacaoService.criarMinha({
+      dataInicio: this.form.dataInicio,
+      dataFim: this.form.dataFim,
+      observacao: this.form.observacao || undefined
+    }).subscribe({
+      next: () => {
+        this.carregar();
+        this.showForm.set(false);
+        this.salvando.set(false);
+      },
+      error: (err) => {
+        this.erro.set(err.error?.message ?? 'Erro ao criar solicitação.');
+        this.salvando.set(false);
+      }
+    });
+  }
+
+  confirmarCancelar(id: number): void {
+    this.cancelandoId.set(id);
+  }
+
+  cancelarSolicitacao(): void {
+    const id = this.cancelandoId()!;
+    this.salvando.set(true);
+    this.solicitacaoService.cancelar(id).subscribe({
+      next: () => {
+        this.carregar();
+        this.cancelandoId.set(null);
+        this.salvando.set(false);
+      },
+      error: () => {
+        this.erro.set('Erro ao cancelar solicitação.');
+        this.cancelandoId.set(null);
+        this.salvando.set(false);
+      }
+    });
+  }
+
+  descartarCancelamento(): void {
+    this.cancelandoId.set(null);
+  }
+
+  hoje(): string {
+    return new Date().toISOString().split('T')[0];
   }
 }

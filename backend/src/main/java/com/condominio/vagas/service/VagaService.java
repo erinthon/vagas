@@ -23,6 +23,10 @@ public class VagaService {
         return vagaRepository.findAll();
     }
 
+    public List<Vaga> listarPorMorador(Long moradorId) {
+        return vagaRepository.findByProprietarioId(moradorId);
+    }
+
     public Vaga buscarPorId(Long id) {
         return vagaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Vaga não encontrada: " + id));

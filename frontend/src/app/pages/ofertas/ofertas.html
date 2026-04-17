@@ -1,109 +1,137 @@
 <div class="page">
 
-  @if (erro) { <div class="alert-error">{{ erro }}</div> }
+  @if (erro()) {
+    <div class="alert-error">{{ erro() }}</div>
+  }
+
+  <!-- Confirmação de encerramento -->
+  @if (encerrandoId()) {
+    <div class="confirm-bar card">
+      <span>Tem certeza que deseja encerrar esta oferta?</span>
+      <div class="actions">
+        <button class="btn btn-secondary btn-sm" (click)="cancelarEncerrar()" [disabled]="salvando()">Cancelar</button>
+        <button class="btn btn-danger btn-sm" (click)="encerrar()" [disabled]="salvando()">
+          {{ salvando() ? 'Encerrando...' : 'Confirmar' }}
+        </button>
+      </div>
+    </div>
+  }
 
   <div class="card">
     <div class="toolbar">
-      <h2>Ofertas de Vagas</h2>
-      @if (!showForm) {
-        <button class="btn btn-primary" (click)="showForm = true">+ Nova oferta</button>
+      <h2>Minhas Ofertas</h2>
+      @if (!showForm()) {
+        <button class="btn btn-primary" (click)="abrirForm()" [disabled]="minhasVagas().length === 0">
+          + Nova oferta
+        </button>
       }
     </div>
 
-    @if (showForm) {
-      <form class="form-panel" (ngSubmit)="salvarOferta()" #fOferta="ngForm">
+    @if (minhasVagas().length === 0 && !carregando()) {
+      <p class="hint-no-vaga">Você precisa cadastrar uma vaga antes de criar ofertas. <a routerLink="/vagas">Cadastrar vaga</a></p>
+    }
+
+    <!-- Formulário de nova oferta -->
+    @if (showForm()) {
+      <form class="form-panel" (ngSubmit)="salvar()">
         <h3>Nova oferta</h3>
         <div class="form-row">
           <div class="form-group">
-            <label>Morador que oferta *</label>
-            <select name="moradorId" [(ngModel)]="moradorSelecionadoId" (ngModelChange)="onMoradorChange()" required>
-              <option [ngValue]="null">— Selecione —</option>
-              @for (m of moradores; track m.id) {
-                <option [value]="m.id">{{ m.nome }} ({{ m.bloco }}/{{ m.apartamento }})</option>
-              }
-            </select>
-          </div>
-          <div class="form-group">
             <label>Vaga *</label>
-            <select name="vagaId" [(ngModel)]="formOferta.vaga.id" required [disabled]="!moradorSelecionadoId">
-              <option [ngValue]="undefined">— Selecione o morador primeiro —</option>
-              @for (v of vagasDoMorador(); track v.id) {
-                <option [value]="v.id">Vaga {{ v.numero }} ({{ v.tipo }})</option>
+            <select name="vagaId" [(ngModel)]="form.vagaId" required>
+              <option [ngValue]="null">— Selecione —</option>
+              @for (v of minhasVagas(); track v.id) {
+                <option [value]="v.id">Vaga {{ v.numero }} — {{ v.tipo === 'COBERTA' ? 'Coberta' : 'Descoberta' }}</option>
               }
             </select>
-            @if (moradorSelecionadoId && vagasDoMorador().length === 0) {
-              <small class="hint">Morador não possui vagas cadastradas.</small>
-            }
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Data início *</label>
-            <input name="dataInicio" type="date" [(ngModel)]="formOferta.dataInicio" required />
+            <input name="dataInicio" type="date" [(ngModel)]="form.dataInicio" [min]="hoje()" required />
           </div>
           <div class="form-group">
             <label>Data fim *</label>
-            <input name="dataFim" type="date" [(ngModel)]="formOferta.dataFim" required />
+            <input name="dataFim" type="date" [(ngModel)]="form.dataFim" [min]="form.dataInicio || hoje()" required />
           </div>
         </div>
         <div class="form-group">
           <label>Observação</label>
-          <textarea name="observacao" [(ngModel)]="formOferta.observacao" rows="2" placeholder="Informações adicionais..."></textarea>
+          <textarea name="observacao" [(ngModel)]="form.observacao" rows="2" placeholder="Informações adicionais..."></textarea>
         </div>
         <div class="actions">
-          <button type="submit" class="btn btn-primary" [disabled]="fOferta.invalid">Publicar oferta</button>
-          <button type="button" class="btn btn-secondary" (click)="cancelarForm()">Cancelar</button>
+          <button type="submit" class="btn btn-primary"
+            [disabled]="salvando() || !form.vagaId || !form.dataInicio || !form.dataFim">
+            {{ salvando() ? 'Publicando...' : 'Publicar oferta' }}
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="cancelarForm()" [disabled]="salvando()">Cancelar</button>
         </div>
       </form>
     }
 
-    <!-- Filtro por período -->
-    <div class="filter-row">
-      <div class="form-group">
-        <label>Período — de</label>
-        <input type="date" [(ngModel)]="filtroInicio" />
-      </div>
-      <div class="form-group">
-        <label>até</label>
-        <input type="date" [(ngModel)]="filtroFim" />
-      </div>
-      <button class="btn btn-secondary" (click)="filtrar()">Filtrar</button>
-      <button class="btn btn-secondary" (click)="limparFiltro()">Limpar</button>
-    </div>
-
-    @if (ofertas.length === 0) {
-      <p class="empty">Nenhuma oferta ativa encontrada.</p>
+    @if (carregando()) {
+      <p class="empty">Carregando...</p>
+    } @else if (ofertas().length === 0) {
+      <p class="empty">Você ainda não criou nenhuma oferta.</p>
     } @else {
-      <table>
-        <thead>
-          <tr>
-            <th>Morador</th>
-            <th>Bloco/Apto</th>
-            <th>Vaga</th>
-            <th>Período</th>
-            <th>Observação</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (o of ofertas; track o.id) {
+
+      <!-- Ofertas ativas -->
+      @if (ofertasAtivas().length > 0) {
+        <h3 class="section-title">Ativas</h3>
+        <table>
+          <thead>
             <tr>
-              <td>{{ o.morador.nome }}</td>
-              <td>{{ o.morador.bloco }}/{{ o.morador.apartamento }}</td>
-              <td>{{ o.vaga.numero }} <span class="badge" [class]="'badge-' + o.vaga.tipo.toLowerCase()">{{ o.vaga.tipo }}</span></td>
-              <td>{{ o.dataInicio | date:'dd/MM/yy' }} → {{ o.dataFim | date:'dd/MM/yy' }}</td>
-              <td>{{ o.observacao || '—' }}</td>
-              <td><span class="badge" [class]="'badge-' + o.status!.toLowerCase()">{{ o.status }}</span></td>
-              <td>
-                @if (o.status === 'ATIVA') {
-                  <button class="btn btn-danger btn-sm" (click)="encerrar(o.id!)">Encerrar</button>
-                }
-              </td>
+              <th>Vaga</th>
+              <th>Período</th>
+              <th>Observação</th>
+              <th>Status</th>
+              <th></th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (o of ofertasAtivas(); track o.id) {
+              <tr>
+                <td>{{ o.vaga.numero }} <span class="badge" [class]="'badge-' + o.vaga.tipo.toLowerCase()">{{ o.vaga.tipo }}</span></td>
+                <td>{{ o.dataInicio | date:'dd/MM/yy' }} → {{ o.dataFim | date:'dd/MM/yy' }}</td>
+                <td>{{ o.observacao || '—' }}</td>
+                <td><span class="badge badge-ativa">ATIVA</span></td>
+                <td>
+                  <button class="btn btn-danger btn-sm" (click)="confirmarEncerrar(o.id!)" [disabled]="!!encerrandoId()">
+                    Encerrar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      <!-- Histórico encerradas -->
+      @if (ofertasEncerradas().length > 0) {
+        <h3 class="section-title section-title--muted">Histórico</h3>
+        <table class="table-muted">
+          <thead>
+            <tr>
+              <th>Vaga</th>
+              <th>Período</th>
+              <th>Observação</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (o of ofertasEncerradas(); track o.id) {
+              <tr>
+                <td>{{ o.vaga.numero }} <span class="badge" [class]="'badge-' + o.vaga.tipo.toLowerCase()">{{ o.vaga.tipo }}</span></td>
+                <td>{{ o.dataInicio | date:'dd/MM/yy' }} → {{ o.dataFim | date:'dd/MM/yy' }}</td>
+                <td>{{ o.observacao || '—' }}</td>
+                <td><span class="badge badge-encerrada">ENCERRADA</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
     }
   </div>
 </div>
