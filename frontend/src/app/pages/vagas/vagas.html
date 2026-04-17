@@ -1,0 +1,95 @@
+<div class="vagas-page">
+  <div class="vagas-card">
+    <div class="card-header">
+      <h2>Minha Vaga</h2>
+      <p class="subtitle">Gerencie sua vaga de estacionamento no condomínio</p>
+    </div>
+
+    @if (carregando()) {
+      <div class="loading">Carregando...</div>
+    } @else if (modo() === 'view') {
+
+      @if (vaga(); as v) {
+        <div class="vaga-info">
+          <div class="vaga-badge" [class.coberta]="v.tipo === 'COBERTA'">
+            <span class="badge-icon">{{ v.tipo === 'COBERTA' ? '🏠' : '☀️' }}</span>
+            <span class="badge-label">{{ v.tipo === 'COBERTA' ? 'Coberta' : 'Descoberta' }}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="label">Número</span>
+            <span class="value">{{ v.numero }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Tipo</span>
+            <span class="value">{{ v.tipo === 'COBERTA' ? 'Coberta' : 'Descoberta' }}</span>
+          </div>
+
+          @if (!confirmandoExclusao()) {
+            <div class="actions">
+              <button class="btn btn-ghost" (click)="iniciarEdicao()">Editar</button>
+              <button class="btn btn-danger-ghost" (click)="confirmandoExclusao.set(true)">Excluir</button>
+            </div>
+          } @else {
+            <div class="confirm-exclusao">
+              <p>Tem certeza que deseja excluir esta vaga?</p>
+              @if (erro()) {
+                <div class="erro">{{ erro() }}</div>
+              }
+              <div class="actions">
+                <button class="btn btn-ghost" (click)="cancelar()" [disabled]="salvando()">Cancelar</button>
+                <button class="btn btn-danger" (click)="excluir()" [disabled]="salvando()">
+                  {{ salvando() ? 'Excluindo...' : 'Confirmar exclusão' }}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <div class="empty-icon">🅿️</div>
+          <p>Você ainda não possui uma vaga cadastrada.</p>
+          <button class="btn btn-primary" (click)="iniciarCadastro()">Cadastrar vaga</button>
+        </div>
+      }
+
+    } @else {
+      <form class="vaga-form" (ngSubmit)="salvar()">
+        <h3>{{ modo() === 'cadastrar' ? 'Cadastrar vaga' : 'Editar vaga' }}</h3>
+
+        <label>
+          Número da vaga
+          <input
+            type="number"
+            [(ngModel)]="form.numero"
+            name="numero"
+            placeholder="ex: 12"
+            min="1"
+            required
+          />
+        </label>
+
+        <label>
+          Tipo
+          <select [(ngModel)]="form.tipo" name="tipo" required>
+            <option value="DESCOBERTA">Descoberta</option>
+            <option value="COBERTA">Coberta</option>
+          </select>
+        </label>
+
+        @if (erro()) {
+          <div class="erro">{{ erro() }}</div>
+        }
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" (click)="cancelar()" [disabled]="salvando()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="salvando() || form.numero == null">
+            {{ salvando() ? 'Salvando...' : (modo() === 'cadastrar' ? 'Cadastrar' : 'Salvar') }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

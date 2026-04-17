@@ -33,4 +33,12 @@ export class SolicitacaoService {
   cancelar(id: number): Observable<Solicitacao> {
     return this.http.patch<Solicitacao>(`${BASE}/${id}/cancelar`, {});
   }
+
+  minhasSolicitacoes(): Observable<Solicitacao[]> {
+    return this.http.get<Solicitacao[]>(`${BASE}/minhas`);
+  }
+
+  criarMinha(dados: { dataInicio: string; dataFim: string; observacao?: string }): Observable<Solicitacao> {
+    return this.http.post<Solicitacao>(`${BASE}/minhas`, dados);
+  }
 }

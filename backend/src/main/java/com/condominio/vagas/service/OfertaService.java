@@ -26,6 +26,10 @@ public class OfertaService {
         return ofertaRepository.findByStatus(StatusOferta.ATIVA);
     }
 
+    public List<Oferta> listarPorMorador(Long moradorId) {
+        return ofertaRepository.findByMoradorId(moradorId);
+    }
+
     public List<Oferta> listarDisponiveisNoPeriodo(LocalDate dataInicio, LocalDate dataFim) {
         return ofertaRepository.findByStatusAndDataInicioLessThanEqualAndDataFimGreaterThanEqual(
                 StatusOferta.ATIVA, dataFim, dataInicio);

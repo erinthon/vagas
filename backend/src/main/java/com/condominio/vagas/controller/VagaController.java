@@ -1,10 +1,12 @@
 package com.condominio.vagas.controller;
 
+import com.condominio.vagas.model.Morador;
 import com.condominio.vagas.model.Vaga;
 import com.condominio.vagas.service.VagaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +21,22 @@ public class VagaController {
     @GetMapping
     public List<Vaga> listar() {
         return vagaService.listarTodas();
+    }
+
+    @GetMapping("/minhas")
+    public List<Vaga> listarMinhas(Authentication authentication) {
+        Long moradorId = (Long) authentication.getPrincipal();
+        return vagaService.listarPorMorador(moradorId);
+    }
+
+    @PostMapping("/minhas")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Vaga criarMinha(@Valid @RequestBody Vaga vaga, Authentication authentication) {
+        Long moradorId = (Long) authentication.getPrincipal();
+        Morador proprietario = new Morador();
+        proprietario.setId(moradorId);
+        vaga.setProprietario(proprietario);
+        return vagaService.salvar(vaga);
     }
 
     @GetMapping("/{id}")

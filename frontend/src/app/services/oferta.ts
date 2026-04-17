@@ -27,4 +27,12 @@ export class OfertaService {
   encerrar(id: number): Observable<Oferta> {
     return this.http.patch<Oferta>(`${BASE}/${id}/encerrar`, {});
   }
+
+  minhasOfertas(): Observable<Oferta[]> {
+    return this.http.get<Oferta[]>(`${BASE}/minhas`);
+  }
+
+  criarMinha(dados: { vaga: { id: number }; dataInicio: string; dataFim: string; observacao?: string }): Observable<Oferta> {
+    return this.http.post<Oferta>(`${BASE}/minhas`, dados);
+  }
 }

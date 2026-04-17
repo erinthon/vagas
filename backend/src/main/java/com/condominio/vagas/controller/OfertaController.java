@@ -1,11 +1,13 @@
 package com.condominio.vagas.controller;
 
+import com.condominio.vagas.model.Morador;
 import com.condominio.vagas.model.Oferta;
 import com.condominio.vagas.service.OfertaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -17,6 +19,22 @@ import java.util.List;
 public class OfertaController {
 
     private final OfertaService ofertaService;
+
+    @GetMapping("/minhas")
+    public List<Oferta> listarMinhas(Authentication authentication) {
+        Long moradorId = (Long) authentication.getPrincipal();
+        return ofertaService.listarPorMorador(moradorId);
+    }
+
+    @PostMapping("/minhas")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Oferta criarMinha(@Valid @RequestBody Oferta oferta, Authentication authentication) {
+        Long moradorId = (Long) authentication.getPrincipal();
+        Morador morador = new Morador();
+        morador.setId(moradorId);
+        oferta.setMorador(morador);
+        return ofertaService.salvar(oferta);
+    }
 
     @GetMapping
     public List<Oferta> listar(

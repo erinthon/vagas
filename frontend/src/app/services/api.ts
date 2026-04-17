@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Vaga } from '../models/vaga.model';
+import { Vaga, TipoVaga } from '../models/vaga.model';
 
 const BASE = 'http://localhost:8080/api/vagas';
 
@@ -13,8 +13,12 @@ export class VagaService {
     return this.http.get<Vaga[]>(BASE);
   }
 
-  listarPorMorador(moradorId: number): Observable<Vaga[]> {
-    return this.http.get<Vaga[]>(`${BASE}?proprietarioId=${moradorId}`);
+  minhasVagas(): Observable<Vaga[]> {
+    return this.http.get<Vaga[]>(`${BASE}/minhas`);
+  }
+
+  criarMinha(dados: { numero: number; tipo: TipoVaga }): Observable<Vaga> {
+    return this.http.post<Vaga>(`${BASE}/minhas`, dados);
   }
 
   criar(vaga: Vaga): Observable<Vaga> {
