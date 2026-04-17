@@ -30,9 +30,9 @@ import { Cargo } from '../../../models/cargo.model';
           <div class="field"><label>Telefone</label><input [(ngModel)]="form.telefone" /></div>
           @if (!editando()) {
             <div class="field">
-              <label>Condomínio *</label>
+              <label>Condomínio <span class="optional">(opcional — pode vincular depois)</span></label>
               <select [(ngModel)]="form.condominioId">
-                <option value="">Selecione...</option>
+                <option value="">Sem condomínio</option>
                 @for (c of condominios(); track c.id) {
                   <option [value]="c.id">{{ c.nome }}</option>
                 }
@@ -138,11 +138,10 @@ export class AdminMoradores implements OnInit {
   fecharForm() { this.mostrarForm.set(false); this.editando.set(null); this.erro.set(''); }
 
   salvar() {
-    if (!this.form.nome || !this.form.email || !this.form.apartamento || !this.form.bloco) {
-      this.erro.set('Nome, e-mail, apartamento e bloco são obrigatórios.'); return;
+    if (!this.form.nome || !this.form.email) {
+      this.erro.set('Nome e e-mail são obrigatórios.'); return;
     }
     const ed = this.editando();
-    if (!ed && !this.form.condominioId) { this.erro.set('Selecione o condomínio.'); return; }
     this.salvando.set(true); this.erro.set('');
 
     const payload: any = { nome: this.form.nome, email: this.form.email, apartamento: this.form.apartamento, bloco: this.form.bloco, telefone: this.form.telefone || null };
@@ -201,5 +200,6 @@ function sharedStyles(): string {
     .btn-del:hover { background: #fecaca; }
     .tag { padding: .2rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 600; }
     .pend { background: #fef9c3; color: #854d0e; }
+    .optional { font-size: .7rem; text-transform: none; font-weight: 400; color: #94a3b8; }
   `;
 }

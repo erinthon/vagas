@@ -29,6 +29,11 @@ public class AdminPainelController {
         return moradorRepository.findByCondominioId(id);
     }
 
+    @GetMapping("/condominios/{id}/cargos")
+    public List<Cargo> cargosDoCondominio(@PathVariable Long id) {
+        return cargoRepository.findByCondominioId(id);
+    }
+
     @GetMapping("/moradores")
     public List<Morador> moradores() {
         return moradorRepository.findAll();

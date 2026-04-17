@@ -15,9 +15,11 @@ public class CondominioRegistroRequest {
     @Email
     private String email;
 
-    @NotBlank
+    // Opção 1: vincular morador existente como síndico
+    private Long moradorId;
+
+    // Opção 2: criar novo morador síndico (usado quando moradorId é nulo)
     private String responsavelNome;
-    @NotBlank
     @Email
     private String responsavelEmail;
     private String responsavelApartamento;
