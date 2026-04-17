@@ -1,5 +1,6 @@
 package com.condominio.vagas.security;
 
+import com.condominio.vagas.repository.AdminUserRepository;
 import com.condominio.vagas.repository.MoradorRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -22,6 +23,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final MoradorRepository moradorRepository;
+    private final AdminUserRepository adminUserRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -32,13 +34,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String token = header.substring(7);
             try {
                 Claims claims = jwtService.parseToken(token);
-                Long moradorId = Long.valueOf(claims.getSubject());
-                if (moradorRepository.existsById(moradorId) &&
-                        SecurityContextHolder.getContext().getAuthentication() == null) {
-                    var auth = new UsernamePasswordAuthenticationToken(
-                            moradorId, null,
-                            List.of(new SimpleGrantedAuthority("ROLE_MORADOR")));
-                    SecurityContextHolder.getContext().setAuthentication(auth);
+                Long id = Long.valueOf(claims.getSubject());
+                String role = claims.get("role", String.class);
+
+                if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                    if ("ADMIN".equals(role) && adminUserRepository.existsById(id)) {
+                        var auth = new UsernamePasswordAuthenticationToken(
+                                id, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+                        SecurityContextHolder.getContext().setAuthentication(auth);
+                    } else if ("MORADOR".equals(role) && moradorRepository.existsById(id)) {
+                        var auth = new UsernamePasswordAuthenticationToken(
+                                id, null, List.of(new SimpleGrantedAuthority("ROLE_MORADOR")));
+                        SecurityContextHolder.getContext().setAuthentication(auth);
+                    }
                 }
             } catch (Exception ignored) {
             }
