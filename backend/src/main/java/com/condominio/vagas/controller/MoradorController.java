@@ -1,5 +1,6 @@
 package com.condominio.vagas.controller;
 
+import com.condominio.vagas.dto.VincularCondominioRequest;
 import com.condominio.vagas.model.Morador;
 import com.condominio.vagas.service.MoradorService;
 import jakarta.validation.Valid;
@@ -35,6 +36,12 @@ public class MoradorController {
     @PutMapping("/{id}")
     public Morador atualizar(@PathVariable Long id, @Valid @RequestBody Morador morador) {
         return moradorService.atualizar(id, morador);
+    }
+
+    @PatchMapping("/{id}/condominio")
+    public Morador vincularCondominio(@PathVariable Long id,
+                                      @Valid @RequestBody VincularCondominioRequest request) {
+        return moradorService.vincularCondominio(id, request);
     }
 
     @DeleteMapping("/{id}")

@@ -48,6 +48,13 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         morador = moradorRepository.save(morador);
 
         String token = jwtService.generateToken(morador.getId(), email, morador.getNome());
-        response.sendRedirect(frontendUrl + "/auth/callback?token=" + token);
+
+        // Se o morador ainda não está vinculado a um condomínio, sinaliza ao frontend
+        // para exibir a tela de seleção de condomínio antes de liberar o acesso
+        if (morador.getCondominio() == null) {
+            response.sendRedirect(frontendUrl + "/auth/callback?token=" + token + "&pendente=sem-condominio");
+        } else {
+            response.sendRedirect(frontendUrl + "/auth/callback?token=" + token);
+        }
     }
 }
