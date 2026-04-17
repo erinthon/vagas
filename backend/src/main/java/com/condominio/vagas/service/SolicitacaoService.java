@@ -1,9 +1,11 @@
 package com.condominio.vagas.service;
 
 import com.condominio.vagas.exception.RegraDeNegocioException;
+import com.condominio.vagas.model.Morador;
 import com.condominio.vagas.model.Oferta;
 import com.condominio.vagas.model.Solicitacao;
 import com.condominio.vagas.model.Solicitacao.StatusSolicitacao;
+import com.condominio.vagas.repository.MoradorRepository;
 import com.condominio.vagas.repository.SolicitacaoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ public class SolicitacaoService {
 
     private final SolicitacaoRepository solicitacaoRepository;
     private final OfertaService ofertaService;
+    private final MoradorRepository moradorRepository;
 
     public List<Solicitacao> listarPendentes() {
         return solicitacaoRepository.findByStatus(StatusSolicitacao.PENDENTE);
@@ -32,8 +35,13 @@ public class SolicitacaoService {
     }
 
     public Solicitacao salvar(Solicitacao solicitacao) {
+        // Carrega morador completo para acessar condomínio
+        Morador morador = moradorRepository.findById(solicitacao.getMorador().getId())
+                .orElseThrow(() -> new RegraDeNegocioException("Morador não encontrado."));
+        solicitacao.setMorador(morador);
+
         // Regra 7: morador precisa estar vinculado a um condomínio
-        if (solicitacao.getMorador().getCondominio() == null) {
+        if (morador.getCondominio() == null) {
             throw new RegraDeNegocioException("Morador não está vinculado a nenhum condomínio.");
         }
 

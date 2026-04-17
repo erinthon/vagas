@@ -6,6 +6,8 @@ import com.condominio.vagas.model.Vaga;
 import com.condominio.vagas.repository.OfertaRepository;
 import com.condominio.vagas.repository.VagaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,8 +29,11 @@ public class VagaService {
     }
 
     public Vaga salvar(Vaga vaga) {
-        // Limite de 1 vaga por proprietário (liberação de vagas adicionais é administrativa)
-        if (vaga.getProprietario() != null &&
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin && vaga.getProprietario() != null &&
             vagaRepository.countByProprietarioId(vaga.getProprietario().getId()) >= 1) {
             throw new RegraDeNegocioException(
                     "Morador já possui uma vaga. A liberação de vagas adicionais deve ser feita pelo administrador.");
