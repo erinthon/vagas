@@ -4,7 +4,10 @@ import com.condominio.vagas.exception.RegraDeNegocioException;
 import com.condominio.vagas.model.Morador;
 import com.condominio.vagas.model.Oferta;
 import com.condominio.vagas.model.Oferta.StatusOferta;
+import com.condominio.vagas.model.Vaga;
+import com.condominio.vagas.repository.MoradorRepository;
 import com.condominio.vagas.repository.OfertaRepository;
+import com.condominio.vagas.repository.VagaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +19,8 @@ import java.util.List;
 public class OfertaService {
 
     private final OfertaRepository ofertaRepository;
+    private final MoradorRepository moradorRepository;
+    private final VagaRepository vagaRepository;
 
     public List<Oferta> listarAtivas() {
         return ofertaRepository.findByStatus(StatusOferta.ATIVA);
@@ -32,14 +37,22 @@ public class OfertaService {
     }
 
     public Oferta salvar(Oferta oferta) {
+        // Carrega entidades completas para garantir acesso às associações
+        Morador morador = moradorRepository.findById(oferta.getMorador().getId())
+                .orElseThrow(() -> new RegraDeNegocioException("Morador não encontrado."));
+        Vaga vaga = vagaRepository.findById(oferta.getVaga().getId())
+                .orElseThrow(() -> new RegraDeNegocioException("Vaga não encontrada."));
+        oferta.setMorador(morador);
+        oferta.setVaga(vaga);
+
         // Regra 7: morador precisa estar vinculado a um condomínio
-        if (oferta.getMorador().getCondominio() == null) {
+        if (morador.getCondominio() == null) {
             throw new RegraDeNegocioException("Morador não está vinculado a nenhum condomínio.");
         }
 
         // Regra 1: apenas o proprietário da vaga pode criar oferta
-        Morador proprietario = oferta.getVaga().getProprietario();
-        if (proprietario == null || !proprietario.getId().equals(oferta.getMorador().getId())) {
+        Morador proprietario = vaga.getProprietario();
+        if (proprietario == null || !proprietario.getId().equals(morador.getId())) {
             throw new RegraDeNegocioException("Apenas o proprietário da vaga pode criar uma oferta.");
         }
 
@@ -54,7 +67,7 @@ public class OfertaService {
         // Regra 2: sem sobreposição de períodos para a mesma vaga
         boolean overlap = ofertaRepository
                 .existsByVagaIdAndStatusAndDataInicioLessThanEqualAndDataFimGreaterThanEqual(
-                        oferta.getVaga().getId(), StatusOferta.ATIVA,
+                        vaga.getId(), StatusOferta.ATIVA,
                         oferta.getDataFim(), oferta.getDataInicio());
         if (overlap) {
             throw new RegraDeNegocioException(
